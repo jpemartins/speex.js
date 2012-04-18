@@ -1,0 +1,112 @@
+.mc-wrapper {
+	text-align: center;
+	background: rgba(0, 0, 0, 0.8);
+	height: 310px;
+	visibility: hidden;
+  position: absolute;
+  -moz-border-radius: 10px;
+  -webkit-border-radius: 10px;
+  -o-border-radius: 10px;
+  -ms-border-radius: 10px;
+  border-radius: 10px;
+  border: 3px solid rgba(0, 0, 0, 0.6);  
+}
+
+.mc-close-button {
+  color: gray;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: right;
+  position: relative;
+  height: 20px;
+  width: inherit;
+  /*float: right;*/
+  margin-right: 5px;
+}
+
+.mc-close-button:hover {
+  color: white;
+  cursor: pointer;
+}
+
+.mc-flashobject {
+  position: relative;
+	z-index: 9999;
+}
+
+.mc-menu {
+	
+}
+
+.mc-button {
+  margin-right: 3px; 
+  visibility: none;
+}
+
+button.mc-stop {
+  background: #c63929;
+  border: 1px solid #951100;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+  -moz-box-shadow: inset 0px 0px 0px 1px rgba(255, 115, 100, 0.4), 0 1px 3px #333;
+  -webkit-box-shadow: inset 0px 0px 0px 1px rgba(255, 115, 100, 0.4), 0 1px 3px #333;
+  box-shadow: inset 0px 0px 0px 1px rgba(255, 115, 100, 0.4), 0 1px 3px #333;
+  color: #fff;
+  font-family: "helvetica neue", helvetica, arial, sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 1;
+  padding: 10px 0 10px 0;
+  text-align: center;
+  text-shadow: 0px -1px 1px rgba(0, 0, 0, .8);
+  width: 80px;
+}
+
+button.mc-stop:hover {
+  background: #cb0500;
+  cursor: pointer;
+}
+
+button.mc-stop:active {
+  background: #b30300;
+  -moz-box-shadow: inset 0px 0px 0px 1px rgba(255, 115, 100, 0.4);
+  -webkit-box-shadow: inset 0px 0px 0px 1px rgba(255, 115, 100, 0.4);
+  box-shadow: inset 0px 0px 0px 1px rgba(255, 115, 100, 0.4);
+}
+
+button.mc-stop:after {
+  /*content: "\25FC";*/ /* &FilledSmallSquare; */
+}
+
+button.mc-capture {
+  background: #7FBF4D;
+  border: 1px solid #63A62F;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+  -moz-box-shadow: inset 0px 0px 0px 1px rgba(255, 115, 100, 0.4), 0 1px 3px #333;
+  -webkit-box-shadow: inset 0px 0px 0px 1px rgba(255, 115, 100, 0.4), 0 1px 3px #333;
+  box-shadow: inset 0px 0px 0px 1px rgba(255, 115, 100, 0.4), 0 1px 3px #333;
+  color: #fff;
+  font-family: "helvetica neue", helvetica, arial, sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 1;
+  padding: 10px 0 10px 0;
+  text-align: center;
+  text-shadow: 0px -1px 1px rgba(0, 0, 0, .8);
+  width: 80px;
+}
+
+button.mc-capture:hover {
+  background: #76b347;
+  cursor: pointer;
+}
+
+button.mc-capture:active {
+  background: #5b992b;
+  -moz-box-shadow: inset 0px 0px 0px 1px #548c29;
+  -webkit-box-shadow: inset 0px 0px 0px 1px #548c29;
+  box-shadow: inset 0px 0px 0px 1px #548c29;
+}
