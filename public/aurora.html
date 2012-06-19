@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+  	<title>Free Speech Codec (Speex)</title>
+        
+	<meta name="description" content="Speex codec in Javascript">
+    <meta name="author" content="Joao Martins">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>speex.js</h1>
+        <p>A Free Codec For Free Speech</p>
+        <p class="view"><a href="http://github.com/jpemartins/speex.js">View the Project on GitHub <small>jpemartins/speex.js</small></a></p>
+        <ul>
+          <li><a href="https://github.com/jpemartins/speex.js/zipballmus/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/jpemartins/speex.js/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="http://github.com/jpemartins/speex.js">Fork On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+	  	<h2>Samples used (Narrowband only)</h2>
+		<p>
+		<a href="../assets/female.wav">WAV</a>
+		</p>
+		<p>
+		<a href="../assets/female.ogg">OGG</a><span> (Speex Quality Parameter= 8/10)</span>
+		</p>
+		<h2>Decoding some OGG</h2>
+		<p>
+			<span class="bold">Decode (*.ogg):</span>
+			<input type="file" id="file" name="file" />
+		</p>
+		
+		<div id="console" class="highlight">
+        	<pre>        		
+        		<span class="etimes">Encode time per packet:</span><span class="etimes-value"></span>
+        		<span class="etot">Total Packets:</span><span class="etot-value"></span>
+        		<span class="etotaltime">Total Encoding time:</span><span class="etotaltime-value"></span>
+
+        		<span class="dtimes">Decode time per packet:</span><span class="dtimes-value"></span>
+        		<span class="dtot">Total Packets:</span><span class="dtot-value"></span>
+        		<span class="dtotaltime">Total Decoding time:</span><span class="dtotaltime-value"></span>
+        	</pre>
+        </div>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="http://github.com/jpemartins">João Martins</a></p>
+        <p><small>Original Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+	
+  <script src="js/lib/aurora.js"></script>  
+
+  <!-- Development -->
+	<script src="../src/libspeex.js"></script>
+
+  <script src="../src/util.js"></script>
+  <script src="../src/types.js"></script>
+
+  <script src="../src/codec.js"></script>
+  <script src="../src/decoder.js"></script>
+  <script src="../src/aurora/demuxer.js"></script>  
+  <script src="../src/aurora/decoder.js"></script>  
+
+	<script>
+
+  document.querySelector("#file").addEventListener("change", function (evt) {
+    var player = Player.fromFile(evt.target.files[0]);
+
+    player.volume = 50;
+    player.preload();    
+
+    player.on("ready", function () {
+      player.play();
+    })
+  }, false);
+
+	</script>
+  </body>
+</html>

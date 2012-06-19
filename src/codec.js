@@ -6,10 +6,12 @@ function CodecProcessor (params) {
 
   this.opt_basename = "SPEEX_SET_";
 
+  this.ctl_func = libspeex["speex_encoder_ctl"];
+  
   this.options = {};
 }
 
-CodecProcessor.prototype.set = function (name, value) {  
+CodecProcessor.prototype.set = function (name, value) {    
   if (typeof(value) === "undefined" || value === null) {
     return;
   }
@@ -30,7 +32,7 @@ CodecProcessor.prototype.set = function (name, value) {
   flag = this.opt_basename + name.toUpperCase().replace(" ", "_");
 
   console.log("%s: %d", flag, conv);  
-  Speex[flag] && libspeex.speex_encoder_ctl(this.state, Speex[flag], ptr);
+  this[flag] && this.ctl_func(this.state, this[flag], ptr);
 
   if (name == "quality") {
     this.bits_size = SpeexEncoder.quality_bits[conv];

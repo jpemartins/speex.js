@@ -37,6 +37,7 @@ SpeexEncoder.quality_bits = {
   , 9: 46  
   , 10: 46  
 }
+
 SpeexEncoder.prototype.init = function () {
 	var i32ptr = libspeex.allocate(1, 'i32', libspeex.ALLOC_STACK)
 	  , bits_addr = libspeex.allocate(Speex.types.SpeexBits.__size__, 'i8', libspeex.ALLOC_STACK)
@@ -135,6 +136,8 @@ SpeexEncoder.prototype.close = function () {
 		libspeex.speex_encoder_destroy(this.state);
 	}
 }
+
+util.merge(SpeexEncoder, global.types);
 
 global["SpeexEncoder"] = SpeexEncoder;
 
