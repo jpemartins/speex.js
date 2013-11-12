@@ -1,10 +1,12 @@
 (function () {
 
 var Context = window["webkitAudioContext"] || window["mozAudioContext"] || window["AudioContext"];
+var getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 
 function startCapture() {
   var supported = typeof(Context) !== "undefined";
-  supported && !!(new Context()).createMediaElementSource;
+  supported &= !!(new Context()).createMediaElementSource;
+  supported &= !!getUserMedia;
 
   if (supported) {
     gUM_startCapture();
@@ -18,16 +20,15 @@ function gUM_startCapture() {
     var codec = new Speex({ quality: 6 });
 
     function onmicaudio (samples) {
-        var encoded = codec.encode(samples), decoded;        
+        var encoded = codec.encode(samples), decoded;
         if (!!encoded){
             decoded = codec.decode(encoded);
-            sink.writeAudio(decoded); 
+            sink.writeAudio(decoded);
         }
-
     }
 
     var resampler = new Resampler(44100, 8000, 1, 1024);
-	  var sink = new XAudioServer(1, 8000, 320, 512, function (samplesRequested) {}, 0);
+    var sink = new XAudioServer(1, 8000, 320, 512, function (samplesRequested) {}, 0);
 
     function callback (_fn) {
         var fn = _fn;
@@ -36,7 +37,7 @@ function gUM_startCapture() {
 
             // Create an AudioNode from the stream.
             var mic = audioContext.createMediaStreamSource( stream );
-            var processor = audioContext.createJavaScriptNode( 1024, 1, 1 );
+            var processor = audioContext.createScriptProcessor( 1024, 1, 1 );
             var refillBuffer = new Int16Array(190);
 
             processor.onaudioprocess = function (event) {
@@ -54,7 +55,7 @@ function gUM_startCapture() {
             processor.connect(audioContext.destination);
         }
     }
-    navigator.webkitGetUserMedia( {audio:true}, callback(onmicaudio) );
+    getUserMedia.call(navigator, {audio:true}, callback(onmicaudio), function(){} );
 }
 
 function flash_startCapture() {
@@ -68,22 +69,22 @@ function flash_startCapture() {
 
       , sink = new Audio()
       , buffer_size = 2304;
-    
+
     sink["mozSetup"] && sink.mozSetup(1, 8000);
-    
+
     function onRecordingComplete() {
-        
+
     }
 
     function onCaptureError (err) {
         console.error(err);
     }
 
-    function onSamplesDec (samples) {                
+    function onSamplesDec (samples) {
         var wavData = atob(samples)
           , data = new Int16Array(new ArrayBuffer(wavData.length - 44))
           , encoded, decoded;
-        
+
         if (data.length > buffer_size) {
             console.log("too much samples: size=", data.length);
             return;
@@ -92,8 +93,8 @@ function flash_startCapture() {
         for (var i=44, j=-1; ++j < data.length; i+=2) {
             data[j] = Binary.toInt16(wavData.substr(i, 2));
         }
-    
-        encoded = codec.encode(data);        
+
+        encoded = codec.encode(data);
         if (!!encoded){
             decoded = codec.decode(encoded)
             sink["mozWriteAudio"] && sink.mozWriteAudio(decoded);
