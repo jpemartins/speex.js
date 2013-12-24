@@ -55,7 +55,7 @@ Speex.header = function (oggPage, onerror) {
 	  , err = onerror || Speex.onerror
 	  , header_addr;
 			
-	header_addr = libspeex.speex_packet_to_header(arr, oggPage.length);	
+	header_addr = libspeex._speex_packet_to_header(arr, oggPage.length);	
 
 	if (!header_addr) {
 		err(new Error("cannot read header from bitstream"));

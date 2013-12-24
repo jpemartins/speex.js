@@ -1,12 +1,12 @@
 function CodecProcessor (params) {
   // read the speex profile (narrow, wideband, ultra wideband)
-  this.mode = libspeex.speex_lib_get_mode(params.mode || 0);
+  this.mode = libspeex._speex_lib_get_mode(params.mode || 0);
 
   this.params = params;
 
   this.opt_basename = "SPEEX_SET_";
 
-  this.ctl_func = libspeex["speex_encoder_ctl"];
+  this.ctl_func = libspeex["_speex_encoder_ctl"];
   
   this.options = {};
 }

@@ -7,7 +7,7 @@ function SpeexDecoder (params) {
 
 	this.floating_point = !params.lpcm && true;
 	
-	this.ctl_func = libspeex["speex_decoder_ctl"];
+	this.ctl_func = libspeex["_speex_decoder_ctl"];
 
 	this.params = params;
 
@@ -25,19 +25,19 @@ util.inherit(SpeexDecoder, CodecProcessor);
 
 SpeexDecoder.prototype.init = function () {
 	var bits_addr = libspeex.allocate(SpeexDecoder.types.SpeexBits.__size__, 'i8', libspeex.ALLOC_STACK);
-	libspeex.speex_bits_init(bits_addr);
+	libspeex._speex_bits_init(bits_addr);
 
 	var i32ptr = libspeex.allocate(1, 'i32', libspeex.ALLOC_STACK)
-	  , state = libspeex.speex_decoder_init(this.mode);
+	  , state = libspeex._speex_decoder_init(this.mode);
 	
 	libspeex.setValue(i32ptr, this.enh, "i32");
-	libspeex.speex_decoder_ctl(state, SpeexDecoder.SPEEX_SET_ENH, i32ptr);	
-    libspeex.speex_decoder_ctl(state, SpeexDecoder.SPEEX_GET_SAMPLING_RATE, i32ptr);
+	libspeex._speex_decoder_ctl(state, SpeexDecoder.SPEEX_SET_ENH, i32ptr);	
+    libspeex._speex_decoder_ctl(state, SpeexDecoder.SPEEX_GET_SAMPLING_RATE, i32ptr);
 
 	this.state = state;
 	this.bits = bits_addr;
 	this.buffer = libspeex.allocate(this.frame_size, 
-	 	'i16', libspeex.ALLOC_STATIC);
+	 	'i16', libspeex.ALLOC_NORMAL);
 	 
 	this.output = new Float32Array(1);
 }
@@ -50,14 +50,14 @@ SpeexDecoder.prototype.read = function (offset, nb, data) {
 	  , len = offset + nb > data.length ? data.length - offset : nb
 	  , isStrIn = data.constructor == String.prototype.constructor;
 
-	!input_addr && (input_addr = libspeex.allocate(this.bits_size, 'i8', libspeex.ALLOC_STATIC));
+	!input_addr && (input_addr = libspeex.allocate(this.bits_size, 'i8', libspeex.ALLOC_NORMAL));
 
 	for (var m=offset-1, k=0; ++m < offset+len; k+=1){
 		libspeex.setValue(input_addr+k, !isStrIn ? data[m] : util.parseInt(data[m]), 'i8');
 	}
 
 	/* Read the buffer */
-	libspeex.speex_bits_read_from(this.bits, input_addr, len);
+	libspeex._speex_bits_read_from(this.bits, input_addr, len);
 
 	this.input = input_addr;
 
@@ -73,7 +73,7 @@ SpeexDecoder.prototype.process = function (spxdata) {
 	  , estimated_size = this.frame_size * total_packets
 
 	  // fixed-point or floating-point is decided at compile time 
-	  , decoder_func = libspeex.speex_decode_int 
+	  , decoder_func = libspeex._speex_decode_int 
 	  , benchmark = !!this.params.benchmark;
 	
 	// Buffer to store the audio samples
@@ -119,8 +119,8 @@ SpeexDecoder.prototype.process = function (spxdata) {
 
 SpeexDecoder.prototype.close = function () {
 	if (!!this.state) {
-		libspeex.speex_bits_destroy(this.bits); 
-		libspeex.speex_decoder_destroy(this.state);		
+		libspeex._speex_bits_destroy(this.bits); 
+		libspeex._speex_decoder_destroy(this.state);		
 	}
 }
 

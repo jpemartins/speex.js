@@ -43,22 +43,22 @@ SpeexEncoder.prototype.init = function () {
 	  , bits_addr = libspeex.allocate(Speex.types.SpeexBits.__size__, 'i8', libspeex.ALLOC_STACK)
 	  , state;
 
-	libspeex.speex_bits_init(bits_addr);
+	libspeex._speex_bits_init(bits_addr);
 	
-	state = libspeex.speex_encoder_init(this.mode);
+	state = libspeex._speex_encoder_init(this.mode);
 	
-	libspeex.speex_encoder_ctl(state, Speex.SPEEX_GET_FRAME_SIZE, i32ptr); 
+	libspeex._speex_encoder_ctl(state, Speex.SPEEX_GET_FRAME_SIZE, i32ptr); 
 	this.frame_size = libspeex.getValue(i32ptr, 'i32');	
 
 	this.buffer_size = this.buffer_size;
 
 	libspeex.setValue(i32ptr, this.quality, 'i32');
-	libspeex.speex_encoder_ctl(state, Speex.SPEEX_SET_QUALITY, i32ptr);
+	libspeex._speex_encoder_ctl(state, Speex.SPEEX_SET_QUALITY, i32ptr);
 
 	this.state = state;
 	this.bits = bits_addr;
-	this.input = libspeex.allocate(this.frame_size, 'i16', libspeex.ALLOC_STATIC);
-	this.buffer = libspeex.allocate(this.buffer_size, 'i8', libspeex.ALLOC_STATIC);
+	this.input = libspeex.allocate(this.frame_size, 'i16', libspeex.ALLOC_NORMAL);
+	this.buffer = libspeex.allocate(this.buffer_size, 'i8', libspeex.ALLOC_NORMAL);
 }
 
 /**
@@ -86,7 +86,7 @@ SpeexEncoder.prototype.process = function (pcmdata) {
 	var output_offset = 0, offset = 0, len, nb, err, tm_str
 	  
 	  , encode_func = this.floating_point ? 
-		  	libspeex.speex_encode : libspeex.speex_encode_int
+		  	libspeex._speex_encode : libspeex._speex_encode_int
       
       , benchmark = !!this.params.benchmark
 	  
@@ -107,7 +107,7 @@ SpeexEncoder.prototype.process = function (pcmdata) {
 	while (offset < pcmdata.length) {
 		benchmark && console.time('encode_packet_offset_'+offset);
 		
-		libspeex.speex_bits_reset(bits_addr);	
+		libspeex._speex_bits_reset(bits_addr);	
 		/* Frames to the input buffer */
 		len = this.read(offset, this.frame_size, pcmdata);	
 		
@@ -115,7 +115,7 @@ SpeexEncoder.prototype.process = function (pcmdata) {
     	err = encode_func(state_addr, input_addr, bits_addr);
 
     	/* Copy the bits to an array of char that can be written */
-    	nb = libspeex.speex_bits_write(bits_addr, buffer_addr, this.buffer_size);
+    	nb = libspeex._speex_bits_write(bits_addr, buffer_addr, this.buffer_size);
     	
     	this.write(output_offset, nb, buffer_addr);
 
@@ -132,8 +132,8 @@ SpeexEncoder.prototype.process = function (pcmdata) {
 SpeexEncoder.prototype.close = function () {
 	/* 'XXX' ABORT Error */
 	if (!!this.state) {
-		libspeex.speex_bits_destroy(this.bits);
-		libspeex.speex_encoder_destroy(this.state);
+		libspeex._speex_bits_destroy(this.bits);
+		libspeex._speex_encoder_destroy(this.state);
 	}
 }
 
