@@ -1,6 +1,8 @@
 (function (global) {
 
-global.libspeex = Module || $;
+global.libspeex = Module || s;
+global.libspeex.generateStructInfo = libspeex.generateStructInfo || Runtime.generateStructInfo;
+
 global.types = {
 	
 	SPEEX_NB_MODES: 3,
@@ -52,7 +54,7 @@ global.types = {
 		   void *reserved2; //< Reserved for future use 
 		} SpeexBits;
 		*/
-		SpeexBits: Runtime.generateStructInfo([
+		SpeexBits: libspeex.generateStructInfo([
 			["i1*", 'chars'],
 			["i32", 'nbBits'],
 			["i32", 'charPtr'],
@@ -85,7 +87,7 @@ global.types = {
 		   spx_int32_t reserved2;
 		} SpeexHeader;
 		*/		
-		SpeexHeader: Runtime.generateStructInfo([
+		SpeexHeader: libspeex.generateStructInfo([
 			["i32", 'speex_version_id'],
 			["i32", 'header_size'],
 			["i32", 'rate'],
@@ -108,7 +110,7 @@ global.types = {
 		typedef struct SpeexPreprocessState {
 		} SpeexPreprocessState;
 		*/
-		SpeexPreprocessState: Runtime.generateStructInfo([
+		SpeexPreprocessState: libspeex.generateStructInfo([
 		]),
 
 		/**
@@ -118,7 +120,7 @@ global.types = {
 		typedef struct SpeexEchoState {
 		} SpeexEchoState;
 		*/
-		SpeexEchoState: Runtime.generateStructInfo([
+		SpeexEchoState: libspeex.generateStructInfo([
 		])
 	}
 }
