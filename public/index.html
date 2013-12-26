@@ -53,13 +53,14 @@
 		
 		<div id="console" class="highlight">
         	<pre>        		
-        		<span class="etimes">Encode time per packet:</span>
-        		<span class="etot">Total Packets:</span>
-        		<span class="etotaltime">Total Encoding time:</span>
+				Encode times (in miliseconds): <span id="etimes"></span>
+				Total Encoding time: <span id="etotaltime"></span>
+				Decode time (in miliseconds): <span id="dtimes"></span>
+				Total Decoding time: <span id="dtotaltime"></span>
 
-        		<span class="dtimes">Decode time per packet:</span>
-        		<span class="dtot">Total Packets:</span>
-        		<span class="dtotaltime">Total Decoding time:</span>
+				SPX File size (in bytes): <span id="esize"></span>
+				PCM File size (in bytes): <span id="dsize"></span>
+				Number of samples: <span id="nrsamples"></span>
         	</pre>
         </div>
       </section>
@@ -81,7 +82,8 @@
 	<script src="js/lib/swfobject.js"></script>
 	<script src="js/lib/xaudio.js"></script>
 
-	<!-- Other Libraries -->
+	<!-- Other Libraries/Polyfills -->
+	<script src="js/lib/usertiming.js"></script>	
 	<script src="js/lib/bitstring.min.js"></script>
 	<script src="js/lib/mediacapture.js"></script>
 

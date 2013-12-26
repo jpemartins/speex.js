@@ -16,14 +16,69 @@ function startCapture() {
   flash_startCapture();
 }
 
+/* 
+ * Metrics are collected following User Timing API (2012 draft)
+ */
+const NR_GROUPS_PER_SEC = 40;
+var nr_measures = 0, nr_samples = 0;
+
+function mean(d)
+{
+    var i, j, mt = 0;
+    for (i=0, j=0; i<d.length; ++i) {
+        var m = d[i].duration;
+        if (!m)
+            continue;
+        j++;
+        mt += m;
+    }
+    mt = mt/j;
+    if (isNaN(mt))
+        mt = 0;
+    return mt;
+}
+
+function stats() {
+    var met = 0, mdt = 0;
+
+    mdt = mean(performance.getEntriesByName("decode"));
+    met = mean(performance.getEntriesByName("encode"));
+
+    // Cleanup
+    performance.clearMeasures();
+    performance.clearMarks();
+
+    nr_measures = 0;
+
+    return [mdt, met];
+}
+
 function gUM_startCapture() {
     var codec = new Speex({ quality: 6 });
 
     function onmicaudio (samples) {
-        var encoded = codec.encode(samples), decoded;
-        if (!!encoded){
+        var encoded, decoded;
+
+        performance.mark("encodeStart");
+        encoded = codec.encode(samples);
+        performance.mark("encodeEnd");
+        performance.measure("encode", "encodeStart", "encodeEnd");
+
+        nr_samples += samples.length;
+        nr_measures++;
+
+        if (!!encoded) {
+            performance.mark("decodeStart");
             decoded = codec.decode(encoded);
+            performance.mark("decodeEnd");
+            performance.measure("decode", "decodeStart", "decodeEnd");
+
             sink.writeAudio(decoded);
+        }
+
+        if (nr_measures >= NR_GROUPS_PER_SEC) {
+            var st = stats();
+            printStreamTimes(st[1], st[0], nr_samples);
         }
     }
 
