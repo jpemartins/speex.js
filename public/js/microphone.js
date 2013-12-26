@@ -19,7 +19,7 @@ function startCapture() {
 /* 
  * Metrics are collected following User Timing API (2012 draft)
  */
-const NR_GROUPS_PER_SEC = 40;
+const NR_MEASURES_PER_SEC = 40;
 var nr_measures = 0, nr_samples = 0;
 
 function mean(d)
@@ -76,7 +76,7 @@ function gUM_startCapture() {
             sink.writeAudio(decoded);
         }
 
-        if (nr_measures >= NR_GROUPS_PER_SEC) {
+        if (nr_measures >= NR_MEASURES_PER_SEC) {
             var st = stats();
             printStreamTimes(st[1], st[0], nr_samples);
         }
