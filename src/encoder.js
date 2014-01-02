@@ -33,9 +33,9 @@ SpeexEncoder.quality_bits = {
   , 5: 28
   , 6: 28
   , 7: 38
-  , 8: 38  
-  , 9: 46  
-  , 10: 46  
+  , 8: 38
+  , 9: 46
+  , 10: 46
 }
 
 SpeexEncoder.prototype.init = function () {

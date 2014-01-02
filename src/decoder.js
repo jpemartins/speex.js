@@ -28,11 +28,17 @@ SpeexDecoder.prototype.init = function () {
 	libspeex._speex_bits_init(bits_addr);
 
 	var i32ptr = libspeex.allocate(1, 'i32', libspeex.ALLOC_STACK)
-	  , state = libspeex._speex_decoder_init(this.mode);
+	  , state = libspeex._speex_decoder_init(this.mode)
+	  , sample_rate;
 	
 	libspeex.setValue(i32ptr, this.enh, "i32");
-	libspeex._speex_decoder_ctl(state, SpeexDecoder.SPEEX_SET_ENH, i32ptr);	
-    libspeex._speex_decoder_ctl(state, SpeexDecoder.SPEEX_GET_SAMPLING_RATE, i32ptr);
+	libspeex._speex_decoder_ctl(state, SpeexDecoder.SPEEX_SET_ENH, i32ptr);
+
+	libspeex.setValue(i32ptr, this.params.sample_rate, "i32");
+	libspeex._speex_decoder_ctl(state, SpeexDecoder.SPEEX_SET_SAMPLING_RATE, i32ptr);
+
+	libspeex._speex_decoder_ctl(state, SpeexDecoder.SPEEX_GET_FRAME_SIZE, i32ptr);
+	this.frame_size = libspeex.getValue(i32ptr, "i32");
 
 	this.state = state;
 	this.bits = bits_addr;
@@ -64,12 +70,13 @@ SpeexDecoder.prototype.read = function (offset, nb, data) {
 	return len;
 }
 
-SpeexDecoder.prototype.process = function (spxdata) {
+SpeexDecoder.prototype.process = function (spxdata, segments) {
 		//console.time('decode');
-	var output_offset = 0, offset = 0, len;
+	var output_offset = 0, offset = 0, segidx = 0;
+	var bits_size = this.bits_size, len;
 
 	// Varies from quality
-	var total_packets = Math.ceil(spxdata.length / this.bits_size)
+	var total_packets = Math.ceil(spxdata.length / bits_size)
 	  , estimated_size = this.frame_size * total_packets
 
 	  // fixed-point or floating-point is decided at compile time 
@@ -80,7 +87,7 @@ SpeexDecoder.prototype.process = function (spxdata) {
 	if (!this.buffer) {
 		this.buffer =  libspeex.allocate(this.frame_size, 'i16', libspeex.ALLOC_STACK)
 	}
-		
+
 	var bits_addr = this.bits
 	  , input_addr = this.input
 	  , buffer_addr = this.buffer
@@ -95,8 +102,13 @@ SpeexDecoder.prototype.process = function (spxdata) {
 		/* Benchmarking */		
 		benchmark && console.time('decode_packet_offset_' + offset);
 
+		if (segments && segments.length > 0)
+			bits_size = segments[segidx];
+		else
+			bits_size = this.bits_size;
+
 		/* Read bits */
-		len = this.read(offset, this.bits_size, spxdata);
+		len = this.read(offset, bits_size, spxdata);
 
   		/* Decode the data */
   		ret = decoder_func(state_addr, bits_addr, buffer_addr);      	      	
@@ -111,7 +123,8 @@ SpeexDecoder.prototype.process = function (spxdata) {
   		benchmark && console.timeEnd('decode_packet_offset_' + offset);
 
   		offset += len;
-  		output_offset += this.frame_size;  		
+		output_offset += this.frame_size;
+		segidx++;
   	}
 
   	return this.output.subarray(0, output_offset);

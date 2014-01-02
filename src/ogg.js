@@ -1,4 +1,5 @@
-function Ogg(stream) {
+function Ogg(stream, options) {
+	var opts = options || {};
 	this.stream = stream;
 	this.pageExpr = new BitString(
 	 "char(4):capturePattern;"
@@ -20,14 +21,18 @@ function Ogg(stream) {
 	this.pageIdx = 0;
 
 	this.frames = [];
+	this.data = null;
+	this.segments = [];
 
 	this.unpacked = false;
+	this.file = !!opts.file;
 }
 
 Ogg.prototype.parsePage = function (binStr) {
-	var page = this.pageExpr.unpack(binStr);
+	var page = this.pageExpr.unpack(binStr),
+		seg = page.segments;
 
-	// Pushes the ogg page
+	page.segments = [seg];
 	this.rawPages.push(binStr);
 
 	page.bos = function () {
@@ -44,7 +49,8 @@ Ogg.prototype.parsePage = function (binStr) {
 
 	var idx=0;
 
-	while (page.frames[idx] == '&') {
+	while (idx < page.pageSegments - 1) {
+		page.segments.push(page.frames.charCodeAt(idx));
 		++idx;
 	}
 
@@ -68,7 +74,7 @@ Ogg.prototype.pages = function () {
 Ogg.prototype.unpack = function () {
 	if (this.unpacked) return;
 
-	var begin, next = 0, str;
+	var begin, next = 0, str, frameIdx = 0;
 
 	while(next >= 0) {
 
@@ -83,12 +89,18 @@ Ogg.prototype.unpack = function () {
 		this.parsePage(str);
 	}
 
-	// Fetch (Extra-)headers
-	this.headers = this.frames.slice(0, 2);
-	
+	// Fetch headers
+	if (this.file) {	
+		frameIdx = 2;
+		this.headers = this.frames.slice(0, frameIdx);
+	}
+
 	// Fetch Data
-	this.data = this.frames.slice(2);
-	
+	this.data = this.frames.slice(frameIdx);
+	for (var i = frameIdx; i<this.pages.length; ++i) {
+		this.segments.push(this.pages[i].segments);
+	}
+
 	this.unpacked = true;
 	return this.pages; 
 }

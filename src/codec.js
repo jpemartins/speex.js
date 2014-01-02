@@ -39,6 +39,14 @@ CodecProcessor.prototype.set = function (name, value) {
   }
 }
 
+CodecProcessor.prototype.enable = function (name) {
+  this.set(name, 1);
+}
+
+CodecProcessor.prototype.disable = function (name) {
+  this.set(name, 0);
+}
+
 /**
   * Temporary buffers
   */

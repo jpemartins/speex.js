@@ -43,20 +43,51 @@ function Speex(params) {
 
 Speex.util = global.util;
 
-Speex.onerror = function (name, code) {
-	console.error("decoding error: ", ret);
+Speex.onerror = function (err) {
+	console.error("decoding error: ", err.message);
 }
-/**
-  * Reads the speex header located on the first page 
-  * of the OGG format
-  */
-Speex.header = function (oggPage, onerror) {
-	var arr = libspeex.allocate(libspeex.intArrayFromString(oggPage), 'i8', libspeex.ALLOC_STACK)
+
+/* 
+ * Parses speex headers
+ */
+Speex.parseHeader = function (b) {
+	var raw = new Uint8Array(Speex.util.str2ab(b));
+	var	v = raw.buffer.slice(0,28)
+	  ,	h = raw.buffer.slice(28);
+	var hdr = new Int32Array(h)
+	  , vr = String.fromCharCode.apply(null, new Uint8Array(v));
+
+	var speex_header = {
+		speex_string: vr.substring(0,8),
+		speex_version_string: vr.substring(8),
+		speex_version_id: hdr[0],
+		header_size: hdr[1],
+		rate: hdr[2],
+		mode: hdr[3],
+		mode_bitstream_version: hdr[4],
+		nb_channels: hdr[5],
+		bitrate: hdr[6],
+		frame_size: hdr[7],
+		vbr: hdr[8],
+		frames_per_packet: hdr[9],
+		extra_headers: hdr[10],
+		reserved1: hdr[11],
+		reserved2: hdr[12]
+	}
+
+	return speex_header;
+}
+
+/* 
+ * Uses libspeex calls to parse the header
+ * and merges it with the types description
+ */
+Speex.pkt2hdr = function (buffer, onerror) {
+	var arr = libspeex.allocate(libspeex.intArrayFromString(buffer), 'i8', libspeex.ALLOC_STACK)
 	  , err = onerror || Speex.onerror
 	  , header_addr;
-			
-	header_addr = libspeex._speex_packet_to_header(arr, oggPage.length);	
 
+	header_addr = libspeex._speex_packet_to_header(arr, buffer.length);
 	if (!header_addr) {
 		err(new Error("cannot read header from bitstream"));
 		return;
@@ -166,8 +197,14 @@ Speex.prototype.encode = function (data, isFile) {
   * @argument encoded String|Uint8Array
   * @returns Float32Array
   */
-Speex.prototype.decode = function (spxdata) {
-	return this.decoder.process(spxdata);
+Speex.prototype.decode = function (spxdata, _segments) {
+	var samples, segments = undefined;
+
+	if (_segments) {
+		segments = [].concat.apply([], _segments);
+	}
+
+	return this.decoder.process(spxdata, segments);
 }
 
 util.merge(Speex, global.types);
