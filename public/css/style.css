@@ -314,6 +314,7 @@ footer p + p {
 
 #console > pre {
   height: 180px;
+  white-space: pre-line;
 }
 
 @media print, screen and (max-width: 740px) {

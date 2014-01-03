@@ -28,57 +28,30 @@ function printFileTimes(ds, es, td, te) {
 global.printFileTimes = printFileTimes;
 
 function handleFileSelect(evt, isTypedArray) {
-    var f = evt.target.files[0];
-    var reader = new FileReader();
-	reader.onload = (function (file) {
-		return function (e) {
-			var extension = file.name.split(".")[1];
+	var file = evt.target.files[0];
+	Speex.readFile(evt, function(e) {
+		var ext = file.name.split(".")[1];
+		var samples, sampleRate;
 
-			if (extension === "ogg") {
-				var data = e.target.result;
-				var samples = decodeOgg(data);
-				Speex.util.play(samples);
+		if (ext === "ogg") {
+			var data = e.target.result,
+				ret, header;
+			ret = Speex.decodeFile(data);
+			samples = ret[0];
+			header = ret[1];
+			sampleRate = header.rate;
+					
+			printFileTimes(samples.length*2, file.length, 
+				performance.getEntriesByName("decode")[0].duration, null);
 
-			} else if (extension == "wav") {
-				var data = e.target.result;
-				var samples = encodeWAVdecodeSpx(data);
-				Speex.util.play(samples);
-			}			
+		} else if (ext == "wav") {
+			var data = e.target.result;
+			samples = encodeWAVdecodeSpx(data);			
 		}
-	})(f);
-    	
-	// Read the file as an ArrayBuffer
-    if (!!isTypedArray) {
-    	reader.readAsArrayBuffer(f);	
-		return;
-	}
-	
-	// Read the file as a Binary String
-    reader.readAsBinaryString(f);
-}
 
-function decodeOgg (file) {
-	var samples, samplesDec;
-	var ogg = new Ogg(file);
+		Speex.util.play(samples, sampleRate);
 
-	ogg.unpack();
-	samples = ogg.bitstream();
-
-	ret = Speex.header(ogg.frames[0]);
-	console.log(ret);
-
-	performance.mark("decodeStart");
-	samplesDec = new Speex({
-		quality: 8
-	}).decode(samples);
-	performance.mark("decodeEnd");
-
-	performance.measure("decode", "decodeStart", "decodeEnd");
-
-	printFileTimes(samplesDec.length, file.length, 
-		performance.getEntriesByName("decode")[0].duration, null);
-
-	return samplesDec;
+	}, isTypedArray);
 }
 
 function encodeWAVdecodeSpx (data) {
@@ -93,7 +66,7 @@ function encodeWAVdecodeSpx (data) {
 	  , quality: 2
 	  , complexity: 2
 	  , bits_size: 15		  
-	})
+	});
 	
 	performance.mark("encodeStart");
 	var spxdata = codec.encode(shorts, true);
@@ -126,5 +99,9 @@ document.getElementById('file').addEventListener('change', function (evt) {
 document.getElementById('play_wav').addEventListener('change', function (evt) {
 	handleFileSelect(evt, true);
 }, false);
+
+setTimeout(function(){
+	Speex.checkAudioElements();
+}, 200);
 
 })(window);
