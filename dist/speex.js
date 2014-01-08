@@ -5654,7 +5654,7 @@ global.types = {
 
 (function (global) {
 
-if (typeof importScripts === 'function') {	
+if (typeof importScripts === 'function') {
 	self.console = {
 		log: function () {}
 	  , debug: function () {}
@@ -5663,29 +5663,94 @@ if (typeof importScripts === 'function') {
 	}
 }
 
+function SpeexComment(cmt) {
+	this.bitstr = new BitString(
+		"vendor_length:4,"+
+		"vendor_string:vendor_length/char,"+
+		"user_comment_list_length:4,"+
+		"user_comments:_")
+
+	if (typeof cmt == "string") {
+		this.raw = cmt;
+		this.data = this.bitstr.unpack(cmt);
+		this.data.vendor_string = String.fromCharCode.apply(null,
+			this.data.vendor_string);
+		return;
+	}
+
+	this.data = cmt;
+	this.data.vendor_string = new Uint8Array(Speex.util.str2ab(
+		cmt.vendor_string));
+	this.raw = this.bitstr.pack(this.data);
+}
+
+function SpeexHeader(hdr) {
+	this.bitstr = new BitString(
+		 "speex_string:8/char,"
+		+"speex_version_string:20/char,"
+		+"speex_version_id/int,"
+		+"header_size/int,"
+		+"rate/int,"
+		+"mode/int,"
+		+"mode_bitstream_version/int,"
+		+"nb_channels/int,"
+		+"bitrate/int,"
+		+"frame_size/int,"
+		+"vbr/int,"
+		+"frames_per_packet/int,"
+		+"extra_headers/int,"
+		+"reserved1/int,"
+		+"reserved2/int", {
+			bytes: true
+	  	  , bigEndian: false
+	});
+
+	if (typeof hdr == "string") {
+		this.raw = hdr;
+		// pretty print
+		this.data = this.bitstr.unpack(hdr);
+		this.data.speex_string = String.fromCharCode.apply(null,
+			this.data.speex_string);
+		this.data.speex_version_string = String.fromCharCode.apply(null,
+			this.data.speex_version_string)
+		return;
+	}
+	this.data = hdr;
+	this.data.speex_string = new Uint8Array(Speex.util.str2ab(
+		hdr.speex_string));
+	this.data.speex_version_string = new Uint8Array(Speex.util.str2ab(
+		hdr.speex_version_string));
+	this.raw = this.bitstr.pack(this.data);
+}
+
+SpeexHeader.prototype.toString = function () {
+	return (this.raw = this.bitstr.pack(this.unpacked));
+}
+
 function Speex(params) {
 	!params.mode && (params.mode = 0);
 
-	this.params = params;	
+	this.params = params;
 
 	this.frame_size = 320 || params.frame_size;
 
 	this.ring_size = 2304 || params.ring_size;
-	
+
     this.linoffset = 0;
 
     this.ringoffset = 0;
 
     this.modoffset = 0;
-      
+
     this.linbuf = new Int16Array(this.frame_size);
 
     this.ring = new Int16Array(this.ring_size * 2);
 
     this.modframes = new Int16Array(this.frame_size);
-    
+
     this.spxbuf = [];
-	
+
+	this.header = null;
 	this.encoder = new SpeexEncoder(params);
 	this.decoder = new SpeexDecoder(params);
 
@@ -5699,38 +5764,15 @@ Speex.onerror = function (err) {
 	console.error("decoding error: ", err.message);
 }
 
-/* 
+/*
  * Parses speex headers
  */
 Speex.parseHeader = function (b) {
-	var raw = new Uint8Array(Speex.util.str2ab(b));
-	var	v = raw.buffer.slice(0,28)
-	  ,	h = raw.buffer.slice(28);
-	var hdr = new Int32Array(h)
-	  , vr = String.fromCharCode.apply(null, new Uint8Array(v));
-
-	var speex_header = {
-		speex_string: vr.substring(0,8),
-		speex_version_string: vr.substring(8),
-		speex_version_id: hdr[0],
-		header_size: hdr[1],
-		rate: hdr[2],
-		mode: hdr[3],
-		mode_bitstream_version: hdr[4],
-		nb_channels: hdr[5],
-		bitrate: hdr[6],
-		frame_size: hdr[7],
-		vbr: hdr[8],
-		frames_per_packet: hdr[9],
-		extra_headers: hdr[10],
-		reserved1: hdr[11],
-		reserved2: hdr[12]
-	}
-
-	return speex_header;
+	this.header = new SpeexHeader(b);
+	return this.header.data;
 }
 
-/* 
+/*
  * Uses libspeex calls to parse the header
  * and merges it with the types description
  */
@@ -5738,9 +5780,8 @@ Speex.pkt2hdr = function (buffer, onerror) {
 	var arr = libspeex.allocate(libspeex.intArrayFromString(buffer), 'i8', libspeex.ALLOC_STACK)
 	  , err = onerror || Speex.onerror
 	  , header_addr;
-			
-	header_addr = libspeex._speex_packet_to_header(arr, buffer.length);	
 
+	header_addr = libspeex._speex_packet_to_header(arr, buffer.length);
 	if (!header_addr) {
 		err(new Error("cannot read header from bitstream"));
 		return;
@@ -5752,7 +5793,7 @@ Speex.pkt2hdr = function (buffer, onerror) {
 
 	header.speex_string = libspeex.Pointer_stringify(header_addr);
 	header.speex_version_string = libspeex.Pointer_stringify(header_addr+8);
-	
+
 	for (var field in typename) {
 		if (field === "__size__") continue;
 		offset = 28 + typename[field];
@@ -5767,26 +5808,26 @@ Speex.pkt2hdr = function (buffer, onerror) {
 	if (header.speex_version_id > 1) {
 		err(new Error("Version "+header.speex_version_string+" is not supported"));
 	}
- 
+
 	return header;
 }
 
-Speex.prototype.set = function (name, value) {	
+Speex.prototype.set = function (name, value) {
 	this.options[name] = value;
 }
 
-Speex.prototype.enable = function (option) {	
+Speex.prototype.enable = function (option) {
 	this.set(option, true);
 }
 
-Speex.prototype.disable = function (option) {	
+Speex.prototype.disable = function (option) {
 	this.set(option, false);
 }
 
 /**
   * Initialize the codec
   */
-Speex.prototype.init = function () {	
+Speex.prototype.init = function () {
 	this.encoder.init();
 	this.decoder.init();
 }
@@ -5794,7 +5835,7 @@ Speex.prototype.init = function () {
 /**
   * Closes the codec
   */
-Speex.prototype.close = function () {	
+Speex.prototype.close = function () {
 	//this.encoder.close();
 	this.decoder.close();
 }
@@ -5814,19 +5855,19 @@ Speex.prototype.encode = function (data, isFile) {
     for (var i=-1, j=this.ringoffset; ++i < data.length; ++j) {
         this.ring[j] = data[i];
     }
-    
+
     this.ringoffset += data.length;
 
     // has enough to decode
-    if ((this.ringoffset > this.linoffset) 
+    if ((this.ringoffset > this.linoffset)
     	&& (this.ringoffset - this.linoffset < this.frame_size)) {
-        
+
         return;
     }
 
     // buffer fill
     for (var i=-1; ++i < this.linbuf.length;) {
-        this.linbuf[i] = this.ring[this.linoffset + i];            
+        this.linbuf[i] = this.ring[this.linoffset + i];
     }
 
     this.linoffset += this.linbuf.length;
@@ -5834,7 +5875,7 @@ Speex.prototype.encode = function (data, isFile) {
 
     if (this.ringoffset > this.ring_size) {
         this.modoffset = this.ringoffset % this.ring_size;
-        
+
 		//console.log("ignoring %d samples", this.modoffset);
         this.ringoffset = 0;
     }
@@ -5863,6 +5904,8 @@ Speex.prototype.decode = function (spxdata, _segments) {
 util.merge(Speex, global.types);
 
 global["Speex"] = Speex;
+global["SpeexHeader"] = SpeexHeader;
+global["SpeexComment"] = SpeexComment;
 
 }(this));
 function CodecProcessor (params) {
@@ -5973,16 +6016,12 @@ SpeexDecoder.prototype.init = function () {
 	
 	libspeex.setValue(i32ptr, this.enh, "i32");
 	libspeex._speex_decoder_ctl(state, SpeexDecoder.SPEEX_SET_ENH, i32ptr);
-	
+
 	libspeex.setValue(i32ptr, this.params.sample_rate, "i32");
 	libspeex._speex_decoder_ctl(state, SpeexDecoder.SPEEX_SET_SAMPLING_RATE, i32ptr);
-	
-	/*
-	libspeex._speex_decoder_ctl(state, SpeexDecoder.SPEEX_GET_SAMPLING_RATE, i32ptr);
-	sample_rate = libspeex.getValue(i32ptr, "i32");
-    */
-    libspeex._speex_decoder_ctl(state, SpeexDecoder.SPEEX_GET_FRAME_SIZE, i32ptr);
-    this.frame_size = libspeex.getValue(i32ptr, "i32");
+
+	libspeex._speex_decoder_ctl(state, SpeexDecoder.SPEEX_GET_FRAME_SIZE, i32ptr);
+	this.frame_size = libspeex.getValue(i32ptr, "i32");
 
 	this.state = state;
 	this.bits = bits_addr;
@@ -6067,8 +6106,8 @@ SpeexDecoder.prototype.process = function (spxdata, segments) {
   		benchmark && console.timeEnd('decode_packet_offset_' + offset);
 
   		offset += len;
-  		output_offset += this.frame_size;
-  		segidx++; 		
+		output_offset += this.frame_size;
+		segidx++;
   	}
 
   	return this.output.subarray(0, output_offset);
@@ -6098,30 +6137,30 @@ util.merge(SpeexDecoder, global.types);
 
 global["SpeexDecoder"] = SpeexDecoder;
 
-}(this));(function (global) {
+}(this));
+(function (global) {
 
 var util = Speex.util;
 
 function SpeexEncoder (params) {
-	CodecProcessor.apply(this, arguments);	
+	CodecProcessor.apply(this, arguments);
 
-	this.quality = params.quality || 8;	
-	
+	this.quality = params.quality || 8;
+
 	this.enh = params.enh || 1;
 
 	this.buffer_size = params.buffer_size || 200;
 
 	this.floating_point = !!params.floating_point;
-	
+
 	// samples buffer size in shorts
 	this.frame_size = params.frame_size || 160;
 
 	// encoded speex packet in bytes (38 [quality=8] by default)
-	this.bits_size = SpeexEncoder.quality_bits[this.quality];
+	this.bits_size = params.bits_size || SpeexEncoder.quality_bits[this.quality];
 }
 
 util.inherit(SpeexEncoder, CodecProcessor);
-
 
 // TO DO - number of bytes to be written (and read by the decoder)
 //         must be done automatically
@@ -6133,7 +6172,7 @@ SpeexEncoder.quality_bits = {
   , 5: 28
   , 6: 28
   , 7: 38
-  , 8: 38 
+  , 8: 38
   , 9: 46
   , 10: 46
 }
@@ -6144,11 +6183,11 @@ SpeexEncoder.prototype.init = function () {
 	  , state;
 
 	libspeex._speex_bits_init(bits_addr);
-	
+
 	state = libspeex._speex_encoder_init(this.mode);
-	
-	libspeex._speex_encoder_ctl(state, Speex.SPEEX_GET_FRAME_SIZE, i32ptr); 
-	this.frame_size = libspeex.getValue(i32ptr, 'i32');	
+
+	libspeex._speex_encoder_ctl(state, Speex.SPEEX_GET_FRAME_SIZE, i32ptr);
+	this.frame_size = libspeex.getValue(i32ptr, 'i32');
 
 	this.buffer_size = this.buffer_size;
 
@@ -6176,20 +6215,20 @@ SpeexEncoder.prototype.read = function (offset, length, data) {
 }
 
 /* Copy to the output buffer */
-SpeexEncoder.prototype.write = function (offset, nb, addr) {	
+SpeexEncoder.prototype.write = function (offset, nb, addr) {
   	for (var m=0, k=offset-1; ++k<offset+nb; m+=1) {
   		this.output[k] = libspeex.getValue(addr+m, "i8");
-  	}  	
+  	}
 }
 
 SpeexEncoder.prototype.process = function (pcmdata) {
-	var output_offset = 0, offset = 0, len, nb, err, tm_str
-	  
-	  , encode_func = this.floating_point ? 
+	var output_offset = 0, offset = 0, len, nb, err, tm_str, segments = []
+
+	  , encode_func = this.floating_point ?
 		  	libspeex._speex_encode : libspeex._speex_encode_int
-      
+
       , benchmark = !!this.params.benchmark
-	  
+
 	  // Varies from quality
 	  , total_packets = Math.ceil(pcmdata.length / this.frame_size)
 	  , estimated_size = this.bits_size * total_packets;
@@ -6203,29 +6242,30 @@ SpeexEncoder.prototype.process = function (pcmdata) {
 	  , buffer_addr = this.buffer
 	  , state_addr = this.state
 	  , output_addr = this.output
-			
+
 	while (offset < pcmdata.length) {
 		benchmark && console.time('encode_packet_offset_'+offset);
-		
-		libspeex._speex_bits_reset(bits_addr);	
+
+		libspeex._speex_bits_reset(bits_addr);
 		/* Frames to the input buffer */
-		len = this.read(offset, this.frame_size, pcmdata);	
-		
+		len = this.read(offset, this.frame_size, pcmdata);
+
     	/* Encode the frame */
     	err = encode_func(state_addr, input_addr, bits_addr);
 
     	/* Copy the bits to an array of char that can be written */
     	nb = libspeex._speex_bits_write(bits_addr, buffer_addr, this.buffer_size);
-    	
+
     	this.write(output_offset, nb, buffer_addr);
 
     	benchmark && console.timeEnd('encode_packet_offset_'+offset);
 
     	output_offset += nb;
     	offset += len;
+		segments.push(nb);
 	}
 
-	return this.output.subarray(0, output_offset);
+	return [this.output.subarray(0, output_offset), segments];
 }
 
 
@@ -6241,20 +6281,21 @@ util.merge(SpeexEncoder, global.types);
 
 global["SpeexEncoder"] = SpeexEncoder;
 
-}(this));function Ogg(stream, options) {
+}(this));
+function Ogg(stream, options) {
 	var opts = options || {};
 	this.stream = stream;
 	this.pageExpr = new BitString(
-	 "char(4):capturePattern;"
-	+"1:version;"
-	+"1:headerType;"
-	+"8:granulePos;"
-	+"4:serial;"
-	+"4:sequence;"
-	+"4:checksum;"
-	+"1:pageSegments;"
-	+"1:segments;"
-	+"char():frames;", {
+	 "capturePattern:4/char,"
+	+"version:1,"
+	+"headerType:1,"
+	+"granulePos:8,"
+	+"serial:4,"
+	+"sequence:4,"
+	+"checksum:4,"
+	+"pageSegments:1,"
+	+"segments:pageSegments/char,"
+	+"frames:_,", {
 		bytes: true
 	  , bigEndian: false
 	});
@@ -6269,19 +6310,42 @@ global["SpeexEncoder"] = SpeexEncoder;
 
 	this.unpacked = false;
 	this.file = !!opts.file;
+	this.error = (options||{}).error || function (e) {};
+}
+
+Ogg.CAPTURE_PATTERN = 0x4f676753; // "OggS"
+Ogg.INVALID_CAPTURE_PATTERN = 1;
+
+Ogg.prototype.magic = function (c) {
+	var magic;
+
+	magic |= (c[0] << 24);
+	magic |= (c[1] << 16);
+	magic |= (c[2] << 8);
+	magic |= c[3];
+
+	return magic;
+}
+
+Ogg.prototype.createPage = function (data) {
+	return this.pageExpr.pack(data);
 }
 
 Ogg.prototype.parsePage = function (binStr) {
 	var page = this.pageExpr.unpack(binStr),
 		seg = page.segments;
 
-	page.segments = [seg];
+	if (this.magic(page.capturePattern) != Ogg.CAPTURE_PATTERN) {
+		this.error( { code: Ogg.INVALID_CAPTURE_PATTERN });
+		return;
+	}
+
 	this.rawPages.push(binStr);
 
 	page.bos = function () {
 		return (this.header == 2);
 	}
-		
+
 	page.cont = function () {
 		return (this.header == 0);
 	}
@@ -6290,15 +6354,6 @@ Ogg.prototype.parsePage = function (binStr) {
 		return (this.header == 4);
 	}
 
-	var idx=0;
-
-	while (idx < page.pageSegments - 1) {
-		page.segments.push(page.frames.charCodeAt(idx));
-		++idx;
-	}
-
-	page.frames = page.frames.substr(idx);
-		
 	// Pushes the ogg parsed paged
 	this.pages.push(page);
 
@@ -6311,10 +6366,10 @@ Ogg.prototype.pageOut = function () {
 }
 
 Ogg.prototype.pages = function () {
-	return this.pages;	
+	return this.pages;
 }
 
-Ogg.prototype.unpack = function () {
+Ogg.prototype.demux = function () {
 	if (this.unpacked) return;
 
 	var begin, next = 0, str, frameIdx = 0;
@@ -6327,13 +6382,13 @@ Ogg.prototype.unpack = function () {
 
 		// Fetch Ogg Raw Page
 		str = this.stream.substring(begin, next != -1 ? next : undefined)
-		
+
 		// Parse and store the page
 		this.parsePage(str);
 	}
 
 	// Fetch headers
-	if (this.file) {	
+	if (this.file) {
 		frameIdx = 2;
 		this.headers = this.frames.slice(0, frameIdx);
 	}
@@ -6345,7 +6400,72 @@ Ogg.prototype.unpack = function () {
 	}
 
 	this.unpacked = true;
-	return this.pages; 
+	return this.pages;
+}
+
+Ogg.prototype.mux = function (d, o) {
+	function OggPageHeader(type, length, checksum) {
+		return page = {
+			capturePattern: [0x4f, 0x67, 0x67, 0x53]
+		  , version: 0
+		  , headerType: type
+		  , granulePos: 0
+		  , serial: 406
+		  , sequence: 0
+		  , checksum: checksum || 0
+		  , pageSegments: 1
+		  , segments: [ length || 0 ]
+		  , frames: ""
+		};
+	}
+
+	function OggPageData(segments) {
+		var p = OggPageHeader(0);
+		p.pageSegments = segments.length;
+		p.segments = segments;
+		return p;
+	}
+
+	function frames(segments) {
+		var sum = 0;
+		for (var i=0; i<segments.length; ++i) {
+			sum += segments[i];
+		}
+		return sum;
+	}
+
+	o=o||{};
+
+	var str = "";
+	var hdr = d[0];
+	// header page
+	str = this.createPage(OggPageHeader(2,
+			o.length || hdr.length, o.checksum))+hdr;
+	if (d.length == 1)
+		return str;
+
+	var comments = d[1];
+	// comments page
+	str += this.createPage(OggPageHeader(0,
+			o.length || comments.length, o.checksum))+comments;
+	if (d.length == 2)
+		return str;
+
+
+	// data page
+	var data = d[2];
+	var segments = data[1].chunk(100)
+	  , stream = String.fromCharCode.apply(null,
+	  		new Uint8Array(data[0].buffer))
+	  , a = 0, b = 0, len = segments.length;
+
+	for (var i = 0; i < len; ++i) {
+		var segchunk = segments[i];
+		b += frames(segchunk);
+		str += (this.createPage(OggPageData(segchunk)) + stream.substring(a, b));
+		a = b;
+	}
+	return str;
 }
 
 Ogg.prototype.bitstream = function () {
