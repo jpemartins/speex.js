@@ -27,10 +27,21 @@ function printFileTimes(ds, es, td, te) {
 
 global.printFileTimes = printFileTimes;
 
+function addDownloadLink(filename, sel, data, mimetype) {
+	var url = "data:"+mimetype+";base64,"+btoa(data);
+	var container = document.querySelector(sel).parentElement;
+	var anchor =  "<br/><a download=\""+filename+"\" href=\"" +
+		url + "\">" + filename + " ("+data.length/1024.0+" Kbytes)</a>";
+
+	container.innerHTML += anchor;
+}
+
 function handleFileSelect(evt, isTypedArray) {
 	var file = evt.target.files[0];
 	Speex.readFile(evt, function(e) {
-		var ext = file.name.split(".")[1];
+		var tks = file.name.split(".");
+		var filename = tks[0]
+		  , ext = tks[1];
 		var samples, sampleRate;
 
 		if (ext === "ogg") {
@@ -40,63 +51,30 @@ function handleFileSelect(evt, isTypedArray) {
 			samples = ret[0];
 			header = ret[1];
 			sampleRate = header.rate;
-					
-			printFileTimes(samples.length*2, file.length, 
+			addDownloadLink(filename+".wav", "#file_ogg",
+				samples, "audio/wav");
+
+			printFileTimes(samples.length*2, file.length,
 				performance.getEntriesByName("decode")[0].duration, null);
 
+			Speex.util.play(samples, sampleRate);
 		} else if (ext == "wav") {
 			var data = e.target.result;
-			samples = encodeWAVdecodeSpx(data);			
+			samples = Speex.encodeFile(data);
+			addDownloadLink(filename+".ogg", "#file_wav",
+				samples, "audio/ogg");
+
+			printFileTimes(data.length, samples.length, 0,
+				performance.getEntriesByName("encode")[0].duration);
 		}
-
-		Speex.util.play(samples, sampleRate);
-
 	}, isTypedArray);
 }
 
-function encodeWAVdecodeSpx (data) {
-	var isFloatArray = data.constructor.prototype == Float32Array.prototype;
-	var frames, bytes, begin, end, times, ret
-	  , buffer = data;
-
-	var shorts = !isFloatArray ? new Int16Array(buffer) : data;
-	
-	var codec = new Speex({
-	   	benchmark: false
-	  , quality: 2
-	  , complexity: 2
-	  , bits_size: 15		  
-	});
-	
-	performance.mark("encodeStart");
-	var spxdata = codec.encode(shorts, true);
-	performance.mark("encodeEnd");
-
-	performance.mark("decodeStart");
-	var samples = codec.decode(spxdata);
-	performance.mark("decodeEnd");
-	
-	performance.measure("encode", "encodeStart", "encodeEnd");
-	performance.measure("decode", "decodeStart", "decodeEnd");
-
-	printFileTimes(
-		data.byteLength,
-		spxdata.byteLength,
-		performance.getEntriesByName("decode")[0].duration,
-		performance.getEntriesByName("encode")[0].duration);
-	
-	codec.close();
-
-	performance.clearMeasures();
-	performance.clearMarks();
-	return samples;
-}
-
-document.getElementById('file').addEventListener('change', function (evt) {
+document.getElementById('file_ogg').addEventListener('change', function (evt) {
 	handleFileSelect(evt);
 }, false);
 
-document.getElementById('play_wav').addEventListener('change', function (evt) {
+document.getElementById('file_wav').addEventListener('change', function (evt) {
 	handleFileSelect(evt, true);
 }, false);
 

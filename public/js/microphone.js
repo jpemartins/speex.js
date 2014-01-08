@@ -16,7 +16,7 @@ function startCapture() {
   flash_startCapture();
 }
 
-/* 
+/*
  * Metrics are collected following User Timing API (2012 draft)
  */
 const NR_MEASURES_PER_SEC = 40;
@@ -69,7 +69,7 @@ function gUM_startCapture() {
 
         if (!!encoded) {
             performance.mark("decodeStart");
-            decoded = codec.decode(encoded);
+            decoded = codec.decode(encoded[0]);
             performance.mark("decodeEnd");
             performance.measure("decode", "decodeStart", "decodeEnd");
 

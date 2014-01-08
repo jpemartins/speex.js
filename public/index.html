@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
   	<title>Free Speech Codec (Speex)</title>
-        
+
 	<meta name="description" content="Speex codec in Javascript">
     <meta name="author" content="Joao Martins">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -24,7 +24,7 @@
           <li><a href="http://github.com/jpemartins/speex.js">Fork On <strong>GitHub</strong></a></li>
         </ul>
       </header>
-      <section>      	
+      <section>
 	  	<h2>Samples</h2>
 		<p>
 			<a href="../assets/female.wav">female.wav</a>
@@ -39,26 +39,26 @@
 			<a href="../assets/wb_male_speex_21.ogg">wb_male_speex_21.ogg</a><span> (16000 Hz, Wideband mode, Speex Quality Parameter=8/10)</span>
 		</p>
 
-		<h2>Encoding WAV</h2>		
+		<h2>Encoding some WAV to OGG</h2>
 		<p>
-			<span class="bold">Encode (Wav):</span>
-			<input type="file" id="play_wav" name="play" />
+			<span class="bold">Encode (*.wav):</span>
+			<input type="file" id="file_wav" name="file_wav" />
 		</p>
 
 		<h2>Decoding some OGG</h2>
 		<p>
 			<span class="bold">Decode (*.ogg):</span>
-			<input type="file" id="file" name="file" />
+			<input type="file" id="file_ogg" name="file_ogg" />
 		</p>
-			
-		<h2>Test microphone for audio in real-time</h2>
+
+		<h2>Test microphone loopback for audio in real-time</h2>
 		<p>
 			<span class="bold">Microphone (PCM):</span>
 			<button id="flash-capture">Capture</button>
 		</p>
-		
+
 		<div id="console" class="highlight">
-        	<pre>        		
+			<pre>
 				Encode times (in miliseconds): <span id="etimes"></span>
 				Total Encoding time: <span id="etotaltime"></span>
 				Decode time (in miliseconds): <span id="dtimes"></span>
@@ -75,29 +75,29 @@
         <p><small>Original Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
       </footer>
     </div>
-	<script>
-	__MediaCaptureUI = { 
+    <script>
+	__MediaCaptureUI = {
 		stylesheet: "css/mediacapture.css"
 	  , swf: "assets/MediaCapture.swf"
-	  , timeout: 500 
+	  , timeout: 500
 	}
 	</script>
 
 	<!-- Dependencies -->
-	<script src="js/lib/pcmdata.min.js"></script>	
+	<script src="js/lib/pcmdata.min.js"></script>
 	<script src="js/lib/swfobject.js"></script>
 	<script src="js/lib/xaudio.js"></script>
 
 	<!-- Other Libraries/Polyfills -->
-	<script src="js/lib/usertiming.js"></script>	
-	<script src="js/lib/bitstring.min.js"></script>
+	<script src="js/lib/bitstring.js"></script>
 	<script src="js/lib/mediacapture.js"></script>
+	<script src="js/lib/usertiming.js"></script>
 
-	<!-- Development -->			
+	<!-- Development -->
 	<script src="../src/ogg.js"></script>
 	<script src="../src/libspeexdsp.js"></script>
 	<script src="../src/libspeex.js"></script>
-	
+
 	<script src="../src/util.js"></script>
 	<script src="../src/types.js"></script>
 
@@ -105,10 +105,10 @@
 	<script src="../src/codec.js"></script>
 	<script src="../src/decoder.js"></script>
 	<script src="../src/encoder.js"></script>
-	
+
 	<!-- For input/microphone handling and codec API usage -->
 	<script src="js/microphone.js"></script>
 	<script src="js/audio.js"></script>
-	<script src="js/application.js"></script>			
+	<script src="js/application.js"></script>
   </body>
 </html>
