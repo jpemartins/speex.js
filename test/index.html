@@ -1,0 +1,38 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Mocha Tests</title>
+  <link rel="stylesheet" href="mocha.css" />
+</head>
+<body>
+  <div id="mocha"></div>
+
+  <!-- Dependencies -->
+  <script src="../public/js/lib/pcmdata.min.js"></script>
+  <script src="../public/js/lib/swfobject.js"></script>
+  <script src="../public/js/lib/xaudio.js"></script>
+  <script src="../public/js/lib/bitstring.js"></script>
+  <script src="../public/js/lib/usertiming.js"></script>
+
+  <!-- Development -->
+  <script src="../src/ogg.js"></script>
+  <script src="../src/libspeex.js"></script>
+  <script src="../src/util.js"></script>
+  <script src="../src/types.js"></script>
+  <script src="../src/speex.js"></script>
+  <script src="../src/codec.js"></script>
+  <script src="../src/decoder.js"></script>
+  <script src="../src/encoder.js"></script>
+
+  <script src="../public/js/audio.js"></script>
+
+  <!-- Tests -->
+  <script src="mocha.js"></script>
+  <script src="chai.js"></script>
+  <script>mocha.setup('bdd')</script>
+  <script src="test.ogg.js"></script>
+  <script>
+    mocha.run();
+  </script>
+</body>
+</html>
