@@ -122,13 +122,8 @@ describe("Ogg", function () {
 		  , frames: ""
 		};
 
-		it("header matches the original", function () {
-			var str = wb.ogg.mux([""], {length:80,checksum:1382996072});
-			assert.equal(str, wb.data.substr(0, str.length));
-		});
-
 		it("should encap the whole header", function () {
-			var str = wb.ogg.mux([wb.ogg.frames[0]], {checksum:1382996072});
+			var str = wb.ogg.mux([wb.ogg.frames[0]]);
 			assert.equal(str, wb.ogg.rawPages[0]);
 		});
 
