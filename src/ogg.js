@@ -206,7 +206,7 @@ Ogg.prototype.mux = function (d, o) {
 		  , granulePos: 0 // TODO
 		  , serial: 406
 		  , sequence: 0
-		  , checksum: checksum || 0 // TODO
+		  , checksum: checksum || 0
 		  , pageSegments: 1
 		  , segments: [ length || 0 ]
 		  , frames: ""
@@ -220,6 +220,25 @@ Ogg.prototype.mux = function (d, o) {
 		return p;
 	}
 
+	function chksum(str, c) {
+		var buf = new ArrayBuffer(str.length);
+		var bufView = new Uint8Array(buf);
+		for (var i=0, len=str.length; i<len; i++) {
+			bufView[i] = str.charCodeAt(i);
+		}
+		dv = new DataView(buf);
+		dv.setUint32(22, c, true);
+
+		return String.fromCharCode.apply(null, new Uint8Array(buf));
+	}
+
+	function hdrup(hdr, content) {
+		var csum, str;
+		csum = crc32(hdr + content);
+		str = chksum(hdr, csum) + content;
+		return str;
+	}
+
 	function frames(segments) {
 		var sum = 0;
 		for (var i=0; i<segments.length; ++i) {
@@ -231,17 +250,20 @@ Ogg.prototype.mux = function (d, o) {
 	o=o||{};
 
 	var str = "";
+	var p = "";
 	var hdr = d[0];
 	// header page
-	str = this.createPage(OggPageHeader(2,
-			o.length || hdr.length, o.checksum))+hdr;
+	p = this.createPage(OggPageHeader(2,
+			o.length || hdr.length, o.checksum))
+	str = hdrup(p, hdr);
 	if (d.length == 1)
 		return str;
 
 	var comments = d[1];
 	// comments page
-	str += this.createPage(OggPageHeader(0,
-			o.length || comments.length, o.checksum))+comments;
+	p = this.createPage(OggPageHeader(0,
+			o.length || comments.length, o.checksum));
+	str += hdrup(p, comments);
 	if (d.length == 2)
 		return str;
 
@@ -251,12 +273,17 @@ Ogg.prototype.mux = function (d, o) {
 	var segments = data[1].chunk(100)
 	  , stream = String.fromCharCode.apply(null,
 	  		new Uint8Array(data[0].buffer))
-	  , a = 0, b = 0, len = segments.length;
+	  , a = 0
+	  , b = 0
+	  , len = segments.length;
 
 	for (var i = 0; i < len; ++i) {
 		var segchunk = segments[i];
 		b += frames(segchunk);
-		str += (this.createPage(OggPageData(segchunk)) + stream.substring(a, b));
+
+		p = this.createPage(OggPageData(segchunk));
+		str += hdrup(p, stream.substring(a, b));
+
 		a = b;
 	}
 	return str;
