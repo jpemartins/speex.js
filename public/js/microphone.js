@@ -100,7 +100,7 @@ function gUM_startCapture() {
                 var samples = resampler.resampler(inputBuffer);
 
                 for (var i = 0; i < samples.length; ++i) {
-                    refillBuffer[i] = Math.ceil(samples[i] * 32768);
+                    refillBuffer[i] = Math.ceil(samples[i] * 32767);
                 }
 
                 fn (refillBuffer);
