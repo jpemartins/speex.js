@@ -6531,6 +6531,13 @@ Ogg.prototype.mux = function (d, o) {
 		return sum;
 	}
 
+  function pack(uintArray) {
+    var s = "";
+    for(var i=0,l=uintArray.length; i<l; i++)
+      s += String.fromCharCode(uintArray[i]);
+    return s;
+  }
+
 	o=o||{};
 
 	var str = "";
@@ -6555,8 +6562,7 @@ Ogg.prototype.mux = function (d, o) {
 	// data page
 	var data = d[2];
 	var segments = data[1].chunk(100)
-	  , stream = String.fromCharCode.apply(null,
-	  		new Uint8Array(data[0].buffer))
+	  , stream = pack(data[0])
 	  , a = 0
 	  , b = 0
 	  , len = segments.length;
