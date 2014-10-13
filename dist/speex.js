@@ -5654,15 +5654,6 @@ global.types = {
 
 (function (global) {
 
-if (typeof importScripts === 'function') {
-	self.console = {
-		log: function () {}
-	  , debug: function () {}
-	  , warn: function () {}
-	  , error: function () {}
-	}
-}
-
 function SpeexComment(cmt) {
 	this.bitstr = new BitString(
 		"vendor_length:4,"+
